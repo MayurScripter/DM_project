@@ -1,0 +1,29 @@
+from datetime import datetime, timedelta
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+dateparse = lambda x: pd.datetime.strptime(x, '%m/%d/%Y %H:%M')
+df = pd.read_csv("C:/Users/HP/Downloads/archive/OnlineRetail.csv", parse_dates=['InvoiceDate'], date_parser=dateparse, encoding = 'unicode_escape')
+df.head()
+df = df.loc[df['Quantity'] > 0]
+df.shape
+df['CustomerID'].describe()
+df.loc[df['CustomerID'].isna()].head()
+df1 = df.dropna(subset=['CustomerID'])
+df1.shape
+df1.head()
+customer_item_matrix = df1.pivot_table(index='CustomerID',columns='StockCode',values='Quantity',aggfunc='sum')
+customer_item_matrix.loc[12481:].head()
+customer_item_matrix = customer_item_matrix.applymap(lambda x: 1 if x>0 else 0)
+customer_item_matrix.loc[12481:].head()
+from sklearn.metrics.pairwise import cosine_similarity
+user_to_user_sim_matrix = pd.DataFrame(cosine_similarity(customer_item_matrix))
+user_to_user_sim_matrix.head()
+user_to_user_sim_matrix.columns = customer_item_matrix.index
+user_to_user_sim_matrix['CustomerID'] = customer_item_matrix.index
+user_to_user_sim_matrix = user_to_user_sim_matrix.set_index('CustomerID')
+user_to_user_sim_matrix.head()
+user_to_user_sim_matrix.loc[12350.0].sort_values(ascending = False)
+items_bought_by_A = set(customer_item_matrix.loc[12350.0].iloc[customer_item_matrix.loc[12350.0].nonzero()].index)
+items_bought_by_A
